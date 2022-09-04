@@ -29,8 +29,8 @@ import SwiftUI
     /// The api url should always be overwritten
     open var apiUrl: String { "" }
     
-    /// The http post data
-    open var postData: [String: String] { [:] }
+    /// The http parameters
+    open var httpParameters: [String: String] { [:] }
     
     public var loadMoreAtRowIndex: Int { 2 }
     
@@ -67,7 +67,7 @@ import SwiftUI
         
         isFetching = true
         
-        UseApi.fetchRows(apiUrl, parameters: paging(postData, _page: page), type: T.self) { array in
+        UseApi.fetchRows(apiUrl, parameters: paging(httpParameters, _page: page), type: T.self) { array in
             if let array = array {
                 if animated {
                     withAnimation {
@@ -118,7 +118,7 @@ import SwiftUI
         
         isFetching = true
         
-        if let array = await UseApi.fetchRows(apiUrl, parameters: paging(postData, _page: page), type: T.self) {
+        if let array = await UseApi.fetchRows(apiUrl, parameters: paging(httpParameters, _page: page), type: T.self) {
             if animated {
                 withAnimation {
                     switch arrayMutation {
