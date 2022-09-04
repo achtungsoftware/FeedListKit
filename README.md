@@ -58,7 +58,7 @@ class MyAnimalFeedNetworking: FeedNetworking<Animal, MyApi> {
     }
     
     // Your parameters
-    override var postData: [String : String] {
+    override var httpParameters: [String : String] {
         [
             "myKey": myValue
         ]
