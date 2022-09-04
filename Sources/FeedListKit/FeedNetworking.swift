@@ -21,6 +21,8 @@ import SwiftUI
 /// `FeedNetworking` makes sure, that the `rows` array is unique with help of the `Identifiable` `id`
 @MainActor open class FeedNetworking<T: Model, UseApi: Api>: ObservableObject {
     
+    public init() {}
+    
     /// This var stores the currently displayed rows
     @Published public var rows: Array<T> = []
     
