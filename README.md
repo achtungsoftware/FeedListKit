@@ -1,18 +1,39 @@
 # FeedListKit
-FeedList kit is a high level framework for representing data from an Api inside a ``SwiftUi`` ``List``.
+FeedList kit is a high level framework for representing data from an Api inside a ``SwiftUi`` ``List``. It automatically handles refreshing and loading more on scroll.
 
 # How to use
 
 ## Create the Api
-First, you need to create an api which conforms to the ``Api`` protocol.
+First, you need to create an api which conforms to the ``Api`` protocol. FeedListKit automatically sends a ``page`` parameter to your api, you need to handle paging directly in your api.
+
+FeedListKit works great with [NetworkKit](https://github.com/knoggl/NetworkKit):
 ```swift
 class MyApi: Api {
     static func fetchRows<T>(_ urlString: String, parameters: [String : String]?, type: T.Type) async -> [T]? where T : Model {
-        // Fetch your data and return the object array asynchronously
+        do {
+            return try await NKHttp.getObjectArray(urlString, parameters: parameters, type: type)
+        } catch {
+            return nil
+        }
     }
     
     static func fetchRows<T>(_ urlString: String, parameters: [String : String]?, type: T.Type, callback: @escaping ([T]?) -> ()) where T : Model {
-        // Fetch your data and return the object array with callback
+        NKHttp.getObjectArray(urlString, parameters: parameters, type: type, callback: callback)
+    }
+}
+```
+
+But you can also fetch the data on your own:
+```swift
+class MyApi: Api {
+    static func fetchRows<T>(_ urlString: String, parameters: [String : String]?, type: T.Type) async -> [T]? where T : Model {
+        // Fetch your data and return the object array asynchronously.
+        // You can use URLSession or some other http library.
+    }
+    
+    static func fetchRows<T>(_ urlString: String, parameters: [String : String]?, type: T.Type, callback: @escaping ([T]?) -> ()) where T : Model {
+        // Fetch your data and return the object array with callback.
+        // You can use URLSession or some other http library.
     }
 }
 ```
