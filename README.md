@@ -1,5 +1,5 @@
 # FeedListKit
-FeedList kit is a high level framework for representing data from an Api inside a ``SwiftUi`` ``List``. It automatically handles refreshing and loading more on scroll.
+FeedListKit is a high level framework for representing data from an Api inside a ``SwiftUi`` ``List``. It automatically handles refreshing and loading more on scroll.
 
 # How to use
 
@@ -49,7 +49,7 @@ struct Animal: Model {
 
 
 ## Create a FeedNetworking
-Create your first ``FeedNetworking``.
+Create your first ``FeedNetworking`` and pass your object ``Model`` and your ``Api`` type.
 ```swift
 class MyAnimalFeedNetworking: FeedNetworking<Animal, MyApi> {
     // The url to your api endpoint
@@ -78,7 +78,7 @@ struct MyAnimals: View {
 
     var body: some View {
         FeedList(feedNetworking: feedNetworking, row: { animal in
-            AnimalRow(animal.wrappedValue)
+            Text(animal.wrappedValue.name)
         }, loadingView: {
             Text("Fetching animals ...")
         }, noDataView: {
