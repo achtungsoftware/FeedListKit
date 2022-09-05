@@ -46,7 +46,7 @@ public struct FeedList<T: Model, UseApi: Api, RowView: View, LoadingView: View, 
         self.onDelete = onDelete
     }
     
-    @State private var didLoad: Bool = false
+    @State private var didRender: Bool = false
     
     public var body: some View {
         ScrollViewReader { scrollViewReader in
@@ -60,6 +60,9 @@ public struct FeedList<T: Model, UseApi: Api, RowView: View, LoadingView: View, 
                 }
                 .onDelete(perform: onDelete)
                 .onRendered {
+                    if didRender { return }
+                    didRender = true
+                    
                     if let startAtId = startAtId {
                         scrollViewReader.scrollTo(startAtId, anchor: .top)
                     }
