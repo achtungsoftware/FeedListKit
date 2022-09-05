@@ -46,22 +46,24 @@ public struct FeedList<T: Model, UseApi: Api, RowView: View, LoadingView: View, 
         self.onDelete = onDelete
     }
     
-    @State private var didRender: Bool = false
+    @State private var didLoad: Bool = false
     
     public var body: some View {
         ScrollViewReader { scrollViewReader in
             List {
-                ForEach($feedNetworking.rows, id: \.id) { $user in
-                    row($user)
-                        .trackRendering()
+                ForEach($feedNetworking.rows, id: \.id) { $item in
+                    row($item)
                         .task {
-                            await feedNetworking.rowDidAppear(user)
+                            await feedNetworking.rowDidAppear(item)
                         }
                 }
                 .onDelete(perform: onDelete)
-                .onRendered {
-                    if didRender { return }
-                    didRender = true
+                .onAppear {
+                    
+                    // TODO: scroll to startAtId not working properly
+                    
+                    if didLoad { return }
+                    didLoad = true
                     
                     if let startAtId = startAtId {
                         scrollViewReader.scrollTo(startAtId, anchor: .top)
