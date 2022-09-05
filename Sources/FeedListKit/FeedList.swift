@@ -53,15 +53,13 @@ public struct FeedList<T: Model, UseApi: Api, RowView: View, LoadingView: View, 
             List {
                 ForEach($feedNetworking.rows, id: \.id) { $user in
                     row($user)
+                        .trackRendering()
                         .task {
                             await feedNetworking.rowDidAppear(user)
                         }
                 }
                 .onDelete(perform: onDelete)
-                .onAppear {
-                    if didLoad { return }
-                    didLoad = true
-                    
+                .onRendered {
                     if let startAtId = startAtId {
                         scrollViewReader.scrollTo(startAtId, anchor: .top)
                     }
