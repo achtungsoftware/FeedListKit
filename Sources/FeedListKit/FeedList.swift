@@ -163,6 +163,8 @@ internal struct UIListRepresentable<T: Model, RowView: View, UseApi: Api>: UIVie
     let collectionView = UITableView(frame: .zero, style: .plain)
     
     func makeUIView(context: Context) -> UITableView {
+        collectionView.rowHeight = UITableView.automaticDimension
+        collectionView.estimatedRowHeight = 100
         collectionView.separatorStyle = .none
         collectionView.translatesAutoresizingMaskIntoConstraints = false
         collectionView.dataSource = context.coordinator
