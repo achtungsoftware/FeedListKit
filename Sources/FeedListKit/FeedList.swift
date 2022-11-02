@@ -202,6 +202,7 @@ internal struct UIListRepresentable<T: Model, RowView: View, UseApi: Api>: UIVie
             }, set: {
                 self.parent.feedNetworking.rows[indexPath.row] = $0
             }))
+                .id(parent.feedNetworking.rows[indexPath.row].id)
             
             if tableViewCell.host == nil {
                 let controller = UIHostingController(rootView: AnyView(view))
