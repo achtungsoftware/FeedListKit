@@ -28,17 +28,18 @@ struct ContentView: View {
     
     var body: some View {
         NavigationView {
-            FeedList(feedNetworking: feedNetworking, row: { animal in
-                Text(animal.wrappedValue.name)
-                    .padding(.vertical, 80)
+            
+            UIFeedList(feedNetworking: feedNetworking, row: { animal in
+                Text(animal.name.wrappedValue)
             }, loadingView: {
                 Text("Loading...")
             }, noDataView: {
                 Text("No animals found!")
-            }, listStyle: .grouped, startAtId: "8")
+            })
             .task {
                 await feedNetworking.fetch()
             }
+            .navigationTitle("Test")
         }
     }
 }

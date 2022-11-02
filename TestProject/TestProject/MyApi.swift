@@ -20,7 +20,7 @@ import FeedListKit
 
 struct Animal: Model {
     let id: String
-    let name: String
+    var name: String
 }
 
 class MyFeedNetworking: FeedNetworking<Animal, MyApi> {}

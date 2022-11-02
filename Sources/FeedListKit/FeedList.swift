@@ -113,3 +113,118 @@ internal extension View {
         }
     }
 }
+
+public struct UIFeedList<T: Model, UseApi: Api, RowView: View, LoadingView: View, NoDataView: View>: View {
+    
+    @ObservedObject var feedNetworking: FeedNetworking<T, UseApi>
+    var row: (Binding<T>) -> RowView
+    var loadingView: () -> LoadingView
+    var noDataView: () -> NoDataView
+    var listStyle: FeedList<T, UseApi, RowView, LoadingView, NoDataView>.Style
+    let startAtId: String?
+    let refreshable: Bool
+    let onDelete: ((_ offsets: IndexSet) -> Void)?
+    
+    public init(feedNetworking: FeedNetworking<T, UseApi>,
+                @ViewBuilder row: @escaping (Binding<T>) -> RowView,
+                @ViewBuilder loadingView: @escaping () -> LoadingView,
+                @ViewBuilder noDataView: @escaping () -> NoDataView,
+                listStyle: FeedList<T, UseApi, RowView, LoadingView, NoDataView>.Style = .plain,
+                startAtId: String? = nil,
+                refreshable: Bool = true,
+                onDelete: ((_ offsets: IndexSet) -> Void)? = nil) {
+        self.feedNetworking = feedNetworking
+        self.row = row
+        self.loadingView = loadingView
+        self.noDataView = noDataView
+        self.listStyle = listStyle
+        self.startAtId = startAtId
+        self.refreshable = refreshable
+        self.onDelete = onDelete
+    }
+    
+    public var body: some View {
+        UIListRepresentable(feedNetworking: feedNetworking, row: row)
+            .overlay(feedNetworking.isLoading ? loadingView() : nil)
+            .overlay(feedNetworking.rows.isEmpty && !feedNetworking.isLoading ? noDataView() : nil)
+    }
+}
+
+internal struct UIListRepresentable<T: Model, RowView: View, UseApi: Api>: UIViewRepresentable {
+    
+    @ObservedObject var feedNetworking: FeedNetworking<T, UseApi>
+    var row: (Binding<T>) -> RowView
+    
+    init(feedNetworking: FeedNetworking<T, UseApi>, @ViewBuilder row: @escaping (Binding<T>) -> RowView) {
+        self.feedNetworking = feedNetworking
+        self.row = row
+    }
+    
+    let collectionView = UITableView(frame: .zero, style: .plain)
+    
+    func makeUIView(context: Context) -> UITableView {
+        collectionView.separatorStyle = .none
+        collectionView.translatesAutoresizingMaskIntoConstraints = false
+        collectionView.dataSource = context.coordinator
+        collectionView.delegate = context.coordinator
+        collectionView.register(HostingCell.self, forCellReuseIdentifier: "Cell")
+        return collectionView
+    }
+    
+    func updateUIView(_ uiView: UITableView, context: Context) {
+        DispatchQueue.main.async {
+            uiView.reloadData()
+        }
+    }
+    
+    func makeCoordinator() -> UIListCoordinator<T, RowView, UseApi> {
+        UIListCoordinator(parent: self)
+    }
+    
+    class UIListCoordinator<T: Model, RowView: View, UseApi: Api>: NSObject, UITableViewDataSource, UITableViewDelegate {
+        
+        var parent: UIListRepresentable<T, RowView, UseApi>
+        
+        init(parent: UIListRepresentable<T, RowView, UseApi>) {
+            self.parent = parent
+        }
+        
+        func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+            parent.feedNetworking.rows.count
+        }
+        
+        func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+            
+            let tableViewCell = tableView.dequeueReusableCell(withIdentifier: "Cell", for: indexPath) as! HostingCell
+            
+            let view = parent.row(Binding(get: {
+                self.parent.feedNetworking.rows[indexPath.row]
+            }, set: {
+                self.parent.feedNetworking.rows[indexPath.row] = $0
+            }))
+            
+            if tableViewCell.host == nil {
+                let controller = UIHostingController(rootView: AnyView(view))
+                tableViewCell.host = controller
+                
+                let tableCellViewContent = controller.view!
+                tableCellViewContent.translatesAutoresizingMaskIntoConstraints = false
+                tableViewCell.contentView.addSubview(tableCellViewContent)
+                tableCellViewContent.topAnchor.constraint(equalTo: tableViewCell.contentView.topAnchor).isActive = true
+                tableCellViewContent.leftAnchor.constraint(equalTo: tableViewCell.contentView.leftAnchor).isActive = true
+                tableCellViewContent.bottomAnchor.constraint(equalTo: tableViewCell.contentView.bottomAnchor).isActive = true
+                tableCellViewContent.rightAnchor.constraint(equalTo: tableViewCell.contentView.rightAnchor).isActive = true
+            } else {
+                tableViewCell.host?.rootView = AnyView(view)
+            }
+            
+            tableViewCell.setNeedsLayout()
+            
+            return tableViewCell
+        }
+    }
+    
+    internal class HostingCell: UITableViewCell {
+        var host: UIHostingController<AnyView>?
+    }
+}
