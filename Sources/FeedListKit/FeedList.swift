@@ -114,6 +114,7 @@ internal extension View {
     }
 }
 
+/// DO NOT USE IN PRODUCTION EXPERIMENTAL FEATURE!
 public struct UIFeedList<T: Model, UseApi: Api, RowView: View, LoadingView: View, NoDataView: View>: View {
     
     @ObservedObject var feedNetworking: FeedNetworking<T, UseApi>
