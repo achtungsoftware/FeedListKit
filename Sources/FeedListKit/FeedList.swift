@@ -126,6 +126,7 @@ public struct UIFeedList<T: Model, UseApi: Api, RowView: View, LoadingView: View
     let startAtId: String?
     let refreshable: Bool
     let onDelete: ((_ offsets: IndexSet) -> Void)?
+    let offsetChanged: ((CGPoint) -> Void)?
     
     public init(feedNetworking: FeedNetworking<T, UseApi>,
                 @ViewBuilder row: @escaping (Binding<T>) -> RowView,
@@ -134,7 +135,8 @@ public struct UIFeedList<T: Model, UseApi: Api, RowView: View, LoadingView: View
                 listStyle: FeedList<T, UseApi, RowView, LoadingView, NoDataView>.Style = .plain,
                 startAtId: String? = nil,
                 refreshable: Bool = true,
-                onDelete: ((_ offsets: IndexSet) -> Void)? = nil) {
+                onDelete: ((_ offsets: IndexSet) -> Void)? = nil,
+                offsetChanged: ((CGPoint) -> Void)? = nil) {
         self.feedNetworking = feedNetworking
         self.row = row
         self.loadingView = loadingView
@@ -143,10 +145,11 @@ public struct UIFeedList<T: Model, UseApi: Api, RowView: View, LoadingView: View
         self.startAtId = startAtId
         self.refreshable = refreshable
         self.onDelete = onDelete
+        self.offsetChanged = offsetChanged
     }
     
     public var body: some View {
-        UIListRepresentable(feedNetworking: feedNetworking, row: row)
+        UIListRepresentable(feedNetworking: feedNetworking, row: row, offsetChanged: offsetChanged)
             .overlay(feedNetworking.isLoading ? loadingView() : nil)
             .overlay(feedNetworking.rows.isEmpty && !feedNetworking.isLoading ? noDataView() : nil)
     }
@@ -178,30 +181,26 @@ internal struct UIListRepresentable<T: Model, RowView: View, UseApi: Api>: UIVie
     
     @ObservedObject var feedNetworking: FeedNetworking<T, UseApi>
     var row: (Binding<T>) -> RowView
+    let offsetChanged: ((CGPoint) -> Void)?
     
-    init(feedNetworking: FeedNetworking<T, UseApi>, @ViewBuilder row: @escaping (Binding<T>) -> RowView) {
+    init(feedNetworking: FeedNetworking<T, UseApi>, @ViewBuilder row: @escaping (Binding<T>) -> RowView, offsetChanged: ((CGPoint) -> Void)? = nil) {
         self.feedNetworking = feedNetworking
         self.row = row
+        self.offsetChanged = offsetChanged
     }
-    
-    let tableView = UITableView(frame: .zero, style: .plain)
     
     func makeUIView(context: Context) -> UITableView {
-        tableView.separatorStyle = .none
-        tableView.separatorInset = .zero
-        tableView.layoutMargins = .zero
-        tableView.dataSource = context.coordinator
-        tableView.delegate = context.coordinator
-        tableView.register(ContentCell.self, forCellReuseIdentifier: "cell")
-        tableView.allowsSelection = false
-        return tableView
+        feedNetworking.tableView.separatorStyle = .none
+        feedNetworking.tableView.separatorInset = .zero
+        feedNetworking.tableView.layoutMargins = .zero
+        feedNetworking.tableView.dataSource = context.coordinator
+        feedNetworking.tableView.delegate = context.coordinator
+        feedNetworking.tableView.register(ContentCell.self, forCellReuseIdentifier: "cell")
+        feedNetworking.tableView.allowsSelection = false
+        return feedNetworking.tableView
     }
     
-    func updateUIView(_ uiView: UITableView, context: Context) {
-        DispatchQueue.main.async {
-            uiView.reloadData()
-        }
-    }
+    func updateUIView(_ uiView: UITableView, context: Context) { }
     
     func makeCoordinator() -> UIListCoordinator<T, RowView, UseApi> {
         UIListCoordinator(parent: self)
@@ -231,6 +230,12 @@ internal struct UIListRepresentable<T: Model, RowView: View, UseApi: Api>: UIVie
             cell.configure(parent: parent, cellForRowAt: indexPath)
             
             return cell
+        }
+        
+        func scrollViewDidScroll(_ scrollView: UIScrollView) {
+            if let offsetChanged = parent.offsetChanged {
+                offsetChanged(scrollView.contentOffset)
+            }
         }
     }
 }

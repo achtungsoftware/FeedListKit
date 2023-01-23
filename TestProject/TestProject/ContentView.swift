@@ -25,6 +25,7 @@ struct ContentView: View {
     }
     
     @StateObject private var feedNetworking: MyFeedNetworking
+    @State private var offset: CGPoint = .zero
     
     var body: some View {
         NavigationView {
@@ -45,7 +46,12 @@ struct ContentView: View {
                 Text("Loading...")
             }, noDataView: {
                 Text("No animals found!")
+            }, offsetChanged: { offset in
+                self.offset = offset
             })
+            .overlay {
+                Text("Offset: \(offset.y)")
+            }
             .task {
                 await feedNetworking.fetch()
             }

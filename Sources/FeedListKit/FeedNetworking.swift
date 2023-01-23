@@ -23,6 +23,8 @@ import SwiftUI
     
     public init() {}
     
+    public let tableView = UITableView(frame: .zero, style: .plain)
+    
     /// This var stores the currently displayed rows
     @Published public var rows: Array<T> = []
     
@@ -260,6 +262,8 @@ import SwiftUI
         }else {
             isLoading = false
         }
+        
+        tableView.reloadData()
     }
     
     open func fetchMoreFinished(animated: Bool = true) {
@@ -270,6 +274,8 @@ import SwiftUI
         }else {
             isFetchingMore = false
         }
+        
+        tableView.reloadData()
     }
     
     open func refreshFinished(animated: Bool = true) {
@@ -280,6 +286,8 @@ import SwiftUI
         }else {
             isRefreshing = false
         }
+        
+        tableView.reloadData()
     }
     
     public func paging(_ params: [String : String], _page: Int) -> [String : String] {
