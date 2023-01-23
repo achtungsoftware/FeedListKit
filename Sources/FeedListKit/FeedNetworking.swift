@@ -23,7 +23,7 @@ import SwiftUI
     
     public init() {}
     
-    public let tableView = UITableView(frame: .zero, style: .plain)
+    public var tableView = UITableView(frame: .zero, style: .plain)
     
     /// This var stores the currently displayed rows
     @Published public var rows: Array<T> = []
