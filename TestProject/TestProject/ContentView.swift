@@ -29,9 +29,18 @@ struct ContentView: View {
     var body: some View {
         NavigationView {
             UIFeedList(feedNetworking: feedNetworking, row: { animal in
-                Text(animal.name.wrappedValue)
-                    .frame(height: Double(Int.random(in: 40..<600)))
-                    .background(Bool.random() ? .blue : .green)
+                ZStack {
+                    Bool.random() ? Color.blue : Color.green
+                    
+                    Text(animal.name.wrappedValue)
+                        .frame(height: Double(Int.random(in: 40..<600)))
+                }
+                .swipeActions {
+                    Button {} label: {
+                        Label("Favorite", systemImage: "star")
+                    }
+                    .tint(.yellow)
+                }
             }, loadingView: {
                 Text("Loading...")
             }, noDataView: {

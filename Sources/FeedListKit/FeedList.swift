@@ -115,6 +115,7 @@ internal extension View {
 }
 
 /// DO NOT USE IN PRODUCTION EXPERIMENTAL FEATURE!
+@available(iOS 16.0, *)
 public struct UIFeedList<T: Model, UseApi: Api, RowView: View, LoadingView: View, NoDataView: View>: View {
     
     @ObservedObject var feedNetworking: FeedNetworking<T, UseApi>
@@ -151,6 +152,28 @@ public struct UIFeedList<T: Model, UseApi: Api, RowView: View, LoadingView: View
     }
 }
 
+@available(iOS 16.0, *)
+final class ContentCell: UITableViewCell {
+
+    override func prepareForReuse() {
+        super.prepareForReuse()
+        contentConfiguration = nil
+    }
+
+    func configure<T: Model, RowView: View, UseApi: Api>(parent: UIListRepresentable<T, RowView, UseApi>, cellForRowAt indexPath: IndexPath) {
+        self.contentConfiguration = UIHostingConfiguration {
+            parent.row(Binding(get: {
+                parent.feedNetworking.rows[indexPath.row]
+            }, set: {
+                parent.feedNetworking.rows[indexPath.row] = $0
+            }))
+                .id(parent.feedNetworking.rows[indexPath.row].id)
+        }
+        .margins(.all, 0)
+    }
+}
+
+@available(iOS 16.0, *)
 internal struct UIListRepresentable<T: Model, RowView: View, UseApi: Api>: UIViewRepresentable {
     
     @ObservedObject var feedNetworking: FeedNetworking<T, UseApi>
@@ -161,17 +184,17 @@ internal struct UIListRepresentable<T: Model, RowView: View, UseApi: Api>: UIVie
         self.row = row
     }
     
-    let collectionView = UITableView(frame: .zero, style: .plain)
+    let tableView = UITableView(frame: .zero, style: .plain)
     
     func makeUIView(context: Context) -> UITableView {
-        collectionView.rowHeight = UITableView.automaticDimension
-        collectionView.estimatedRowHeight = 100
-        collectionView.separatorStyle = .none
-        collectionView.translatesAutoresizingMaskIntoConstraints = false
-        collectionView.dataSource = context.coordinator
-        collectionView.delegate = context.coordinator
-        collectionView.register(HostingCell.self, forCellReuseIdentifier: "Cell")
-        return collectionView
+        tableView.separatorStyle = .none
+        tableView.separatorInset = .zero
+        tableView.layoutMargins = .zero
+        tableView.dataSource = context.coordinator
+        tableView.delegate = context.coordinator
+        tableView.register(ContentCell.self, forCellReuseIdentifier: "cell")
+        tableView.allowsSelection = false
+        return tableView
     }
     
     func updateUIView(_ uiView: UITableView, context: Context) {
@@ -198,37 +221,16 @@ internal struct UIListRepresentable<T: Model, RowView: View, UseApi: Api>: UIVie
         
         func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
             
-            let tableViewCell = tableView.dequeueReusableCell(withIdentifier: "Cell", for: indexPath) as! HostingCell
-            
-            let view = parent.row(Binding(get: {
-                self.parent.feedNetworking.rows[indexPath.row]
-            }, set: {
-                self.parent.feedNetworking.rows[indexPath.row] = $0
-            }))
-                .id(parent.feedNetworking.rows[indexPath.row].id)
-            
-            if tableViewCell.host == nil {
-                let controller = UIHostingController(rootView: AnyView(view))
-                tableViewCell.host = controller
-                
-                let tableCellViewContent = controller.view!
-                tableCellViewContent.translatesAutoresizingMaskIntoConstraints = false
-                tableViewCell.contentView.addSubview(tableCellViewContent)
-                tableCellViewContent.topAnchor.constraint(equalTo: tableViewCell.contentView.topAnchor).isActive = true
-                tableCellViewContent.leftAnchor.constraint(equalTo: tableViewCell.contentView.leftAnchor).isActive = true
-                tableCellViewContent.bottomAnchor.constraint(equalTo: tableViewCell.contentView.bottomAnchor).isActive = true
-                tableCellViewContent.rightAnchor.constraint(equalTo: tableViewCell.contentView.rightAnchor).isActive = true
-            } else {
-                tableViewCell.host?.rootView = AnyView(view)
+            guard let cell = tableView.dequeueReusableCell(
+                withIdentifier: "cell",
+                for: indexPath
+            ) as? ContentCell else {
+                return UITableViewCell()
             }
             
-            tableViewCell.setNeedsLayout()
+            cell.configure(parent: parent, cellForRowAt: indexPath)
             
-            return tableViewCell
+            return cell
         }
-    }
-    
-    internal class HostingCell: UITableViewCell {
-        var host: UIHostingController<AnyView>?
     }
 }
