@@ -127,6 +127,7 @@ public struct UIFeedList<T: Model, UseApi: Api, RowView: View, LoadingView: View
     let refreshable: Bool
     let onDelete: ((_ offsets: IndexSet) -> Void)?
     let offsetChanged: ((CGPoint) -> Void)?
+    var tableView: UITableView
     
     public init(feedNetworking: FeedNetworking<T, UseApi>,
                 @ViewBuilder row: @escaping (Binding<T>) -> RowView,
@@ -136,7 +137,8 @@ public struct UIFeedList<T: Model, UseApi: Api, RowView: View, LoadingView: View
                 startAtId: String? = nil,
                 refreshable: Bool = true,
                 onDelete: ((_ offsets: IndexSet) -> Void)? = nil,
-                offsetChanged: ((CGPoint) -> Void)? = nil) {
+                offsetChanged: ((CGPoint) -> Void)? = nil,
+                tableView: UITableView) {
         self.feedNetworking = feedNetworking
         self.row = row
         self.loadingView = loadingView
@@ -146,12 +148,20 @@ public struct UIFeedList<T: Model, UseApi: Api, RowView: View, LoadingView: View
         self.refreshable = refreshable
         self.onDelete = onDelete
         self.offsetChanged = offsetChanged
+        self.tableView = tableView
     }
     
+    @State private var didAppear: Bool = false
+    
     public var body: some View {
-        UIListRepresentable(feedNetworking: feedNetworking, row: row, offsetChanged: offsetChanged)
+        UIListRepresentable(feedNetworking: feedNetworking, row: row, offsetChanged: offsetChanged, tableView: tableView)
             .overlay(feedNetworking.isLoading ? loadingView() : nil)
             .overlay(feedNetworking.rows.isEmpty && !feedNetworking.isLoading ? noDataView() : nil)
+            .onAppear {
+                if didAppear { return }
+                feedNetworking.tableView = tableView
+                didAppear = true
+            }
     }
 }
 
@@ -182,22 +192,24 @@ internal struct UIListRepresentable<T: Model, RowView: View, UseApi: Api>: UIVie
     @ObservedObject var feedNetworking: FeedNetworking<T, UseApi>
     var row: (Binding<T>) -> RowView
     let offsetChanged: ((CGPoint) -> Void)?
+    var tableView: UITableView
     
-    init(feedNetworking: FeedNetworking<T, UseApi>, @ViewBuilder row: @escaping (Binding<T>) -> RowView, offsetChanged: ((CGPoint) -> Void)? = nil) {
+    init(feedNetworking: FeedNetworking<T, UseApi>, @ViewBuilder row: @escaping (Binding<T>) -> RowView, offsetChanged: ((CGPoint) -> Void)? = nil, tableView: UITableView) {
         self.feedNetworking = feedNetworking
         self.row = row
         self.offsetChanged = offsetChanged
+        self.tableView = tableView
     }
     
     func makeUIView(context: Context) -> UITableView {
-        feedNetworking.tableView.separatorStyle = .none
-        feedNetworking.tableView.separatorInset = .zero
-        feedNetworking.tableView.layoutMargins = .zero
-        feedNetworking.tableView.dataSource = context.coordinator
-        feedNetworking.tableView.delegate = context.coordinator
-        feedNetworking.tableView.register(ContentCell.self, forCellReuseIdentifier: "cell")
-        feedNetworking.tableView.allowsSelection = false
-        return feedNetworking.tableView
+        tableView.separatorStyle = .none
+        tableView.separatorInset = .zero
+        tableView.layoutMargins = .zero
+        tableView.dataSource = context.coordinator
+        tableView.delegate = context.coordinator
+        tableView.register(ContentCell.self, forCellReuseIdentifier: "cell")
+        tableView.allowsSelection = false
+        return tableView
     }
     
     func updateUIView(_ uiView: UITableView, context: Context) { }

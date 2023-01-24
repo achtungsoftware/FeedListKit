@@ -23,8 +23,6 @@ import SwiftUI
     
     public init() {}
     
-    public var tableView = UITableView(frame: .zero, style: .plain)
-    
     /// This var stores the currently displayed rows
     @Published public var rows: Array<T> = []
     
@@ -51,6 +49,8 @@ import SwiftUI
     
     /// This var indicates wether the network is currently fetching more `rows`
     public var isFetchingMore: Bool = false
+    
+    internal var tableView: UITableView?
     
     /// This method fetches the first rows (page)
     /// - Parameters:
@@ -263,7 +263,7 @@ import SwiftUI
             isLoading = false
         }
         
-        tableView.reloadData()
+        tableView?.reloadData()
     }
     
     open func fetchMoreFinished(animated: Bool = true) {
@@ -275,7 +275,7 @@ import SwiftUI
             isFetchingMore = false
         }
         
-        tableView.reloadData()
+        tableView?.reloadData()
     }
     
     open func refreshFinished(animated: Bool = true) {
@@ -287,7 +287,7 @@ import SwiftUI
             isRefreshing = false
         }
         
-        tableView.reloadData()
+        tableView?.reloadData()
     }
     
     public func paging(_ params: [String : String], _page: Int) -> [String : String] {
