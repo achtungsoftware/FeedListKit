@@ -35,7 +35,7 @@ import SwiftUI
     public var loadMoreAtRowIndex: Int { 2 }
     
     /// This var stores the current page
-    public var page: Int = 0
+    public var page: Int = 1
     
     /// This var indicates wether the first fetch is done.
     /// If this var is `true`, the first fetch is not done
@@ -64,7 +64,7 @@ import SwiftUI
         }
         
         if resetPage {
-            page = 0
+            page = 1
         }
         
         isFetching = true
@@ -115,7 +115,7 @@ import SwiftUI
         }
         
         if resetPage {
-            page = 0
+            page = 1
         }
         
         isFetching = true
@@ -189,7 +189,7 @@ import SwiftUI
         fetchMoreFinished(animated: animated)
     }
     
-    /// This method refreshes and resets the rows to page `0`
+    /// This method refreshes and resets the rows to page `1`
     /// - Parameters:
     ///   - animated: Should the result variables be animated?, default is `true`
     ///   - callback: The callback
@@ -207,7 +207,7 @@ import SwiftUI
             isRefreshing = true
         }
         
-        page = 0
+        page = 1
         
         fetch(animated: animated, arrayMutation: .replace) {
             callback()
@@ -233,7 +233,7 @@ import SwiftUI
             isRefreshing = true
         }
         
-        page = 0
+        page = 1
         
         await fetch(animated: animated, arrayMutation: .replace)
         refreshFinished(animated: animated)
